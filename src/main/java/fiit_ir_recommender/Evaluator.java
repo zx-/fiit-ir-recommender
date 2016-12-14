@@ -20,7 +20,21 @@ public class Evaluator {
 
     }
 
-    public static PrecisionAtK computePrecisionAtK(Map.Entry<User,List<Ident>> rEntry){
+    private static long getId(Activity a, boolean use_deal_id) {
+        if(use_deal_id)
+            return a.deal_id;
+
+        return a.dealitem_id;
+    }
+
+    private static long getId(Ident i, boolean use_deal_id) {
+        if(use_deal_id)
+            return i.deal_id;
+
+        return i.dealitem_id;
+    }
+
+    public static PrecisionAtK computePrecisionAtK(Map.Entry<User,List<Ident>> rEntry, boolean use_deal_id){
         int TP = 0;
         PrecisionAtK pak = new PrecisionAtK();
         User u = rEntry.getKey();
@@ -28,14 +42,14 @@ public class Evaluator {
 
         Set<Long> ids = new HashSet<>();
         for(Activity a:u.activities) {
-            ids.add(a.dealitem_id);
+            ids.add(getId(a,use_deal_id));
         }
 
         int cnt = 0;
         for(Ident i:recommendations) {
             if(cnt++ >= PrecisionAtK.MAX_K) break;
 
-            if(ids.contains(i.dealitem_id)) TP++;
+            if(ids.contains(getId(i,use_deal_id))) TP++;
             pak.addTpAtK(cnt,TP);
             pak.addNAtK(cnt,Math.min(cnt,u.activities.size()));
 
@@ -44,18 +58,18 @@ public class Evaluator {
         return pak;
     }
 
-    public static int getTp(Map.Entry<User,List<Ident>> rEntry){
+    public static int getTp(Map.Entry<User,List<Ident>> rEntry, boolean use_deal_id){
         int TP = 0;
         User u = rEntry.getKey();
         List<Ident> recommendations = rEntry.getValue();
 
         Set<Long> ids = new HashSet<>();
         for(Activity a:u.activities) {
-            ids.add(a.dealitem_id);
+            ids.add(getId(a,use_deal_id));
         }
 
         for(Ident i:recommendations) {
-            if(ids.contains(i.dealitem_id)) TP++;
+            if(ids.contains(getId(i,use_deal_id))) TP++;
         }
 
         return TP;
@@ -67,7 +81,7 @@ public class Evaluator {
                 rEntry.getValue().size());
     }
 
-    public static double nDCG(Map.Entry<User,List<Ident>> rEntry) {
+    public static double nDCG(Map.Entry<User,List<Ident>> rEntry, boolean use_deal_id) {
         double res = 0;
 
         User u = rEntry.getKey();
@@ -75,7 +89,7 @@ public class Evaluator {
 
         Set<Long> ids = new HashSet<>();
         for(Activity a:u.activities) {
-            ids.add(a.dealitem_id);
+            ids.add(getId(a,use_deal_id));
         }
 
         int cnt = 0;
@@ -83,7 +97,7 @@ public class Evaluator {
         for(Ident i:recommendations) {
             cnt++;
 
-            if(ids.contains(i.dealitem_id)){
+            if(ids.contains(getId(i,use_deal_id))){
                 if(cnt == 1) {
                     res += 1;
                 } else {

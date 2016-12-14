@@ -45,7 +45,7 @@ public class App {
             //compute recommendations for testUsers and push them to results
             testUsers.values()
                     .parallelStream()
-                    //.limit(3000)
+                    .limit(3000)
                     .forEach(user -> {
                         List<Ident> res = e.recommendToUser(user,trainUsers,trainDealsHash,testDealsHash);
                         results.put(user,res);
@@ -57,10 +57,15 @@ public class App {
 
             // EVALUATION
             startTime = System.currentTimeMillis();
+
             // count TP
             int TP = results.entrySet().parallelStream()
-                        .mapToInt(Evaluator::getTp)
+                        .mapToInt(entry -> Evaluator.getTp(entry,false))
                         .sum();
+            int TP_deal_id = results.entrySet().parallelStream()
+                    .mapToInt(entry -> Evaluator.getTp(entry,true))
+                    .sum();
+
             // count N - min(tp+fp,activity.size())
             int N = results.entrySet().parallelStream()
                     .mapToInt(Evaluator::getN)
@@ -70,24 +75,39 @@ public class App {
             List<PrecisionAtK> finalPak = Collections.synchronizedList(new ArrayList<>());
             results.entrySet()
                     .parallelStream()
-                    .forEach((entry) -> finalPak.add(Evaluator.computePrecisionAtK(entry)));
+                    .forEach((entry) -> finalPak.add(Evaluator.computePrecisionAtK(entry,false)));
 
             // Sum every Precision@K together for average
             PrecisionAtK avg = finalPak.parallelStream()
                     .reduce((precisionAtK, precisionAtK2) -> precisionAtK.combineWith(precisionAtK2))
                     .get();
 
+            // deal_id
+            List<PrecisionAtK> finalPak_deal_id = Collections.synchronizedList(new ArrayList<>());
+            results.entrySet()
+                    .parallelStream()
+                    .forEach((entry) -> finalPak_deal_id.add(Evaluator.computePrecisionAtK(entry,true)));
+
+            PrecisionAtK avg_deal_id = finalPak_deal_id.parallelStream()
+                    .reduce((precisionAtK, precisionAtK2) -> precisionAtK.combineWith(precisionAtK2))
+                    .get();
+
+
             // Average nDCG
             double nDCG = results.entrySet().parallelStream()
-                            .mapToDouble(Evaluator::nDCG)
+                            .mapToDouble(entry -> Evaluator.nDCG(entry,false))
                             .average().getAsDouble();
+
+            double nDCG_deal_id = results.entrySet().parallelStream()
+                    .mapToDouble(entry -> Evaluator.nDCG(entry,true))
+                    .average().getAsDouble();
 
 
             endTime = System.currentTimeMillis();
             System.out.println("Eval: " + (endTime - startTime) + " milliseconds");
 
             // PRINT RESULTS & compute TP/N when needed
-            System.out.println("Precision@K:");
+            System.out.println("Precision@K (dealitem_id):");
             for(int i = 1; i<=PrecisionAtK.MAX_K; i++) {
                 System.out.println(String.format(
                         "K: %d tp: %d n: %d -> %f",
@@ -95,17 +115,32 @@ public class App {
                         (double)avg.getTpAtK(i)/(double)avg.getNAtK(i)
                 ));
             }
-
-
+            System.out.println();
+            System.out.println("Precision@K (deal_id):");
+            for(int i = 1; i<=PrecisionAtK.MAX_K; i++) {
+                System.out.println(String.format(
+                        "K: %d tp: %d n: %d -> %f",
+                        i,avg_deal_id.getTpAtK(i),avg_deal_id.getNAtK(i),
+                        (double)avg_deal_id.getTpAtK(i)/(double)avg_deal_id.getNAtK(i)
+                ));
+            }
 
             System.out.println();
-            System.out.println("Precision:");
+            System.out.println("Precision (dealitem_id):");
             System.out.println("TP: "+TP);
             System.out.println("N: "+N);
             System.out.println((double) TP/(double) N);
+            System.out.println();
+            System.out.println("Precision (deal_id):");
+            System.out.println("TP: "+TP_deal_id);
+            System.out.println("N: "+N);
+            System.out.println((double) TP/(double) N);
+
+
 
             System.out.println();
-            System.out.println("Average nDCG: "+nDCG);
+            System.out.println("Average nDCG (dealitem_id): "+nDCG);
+            System.out.println("Average nDCG (deal_id): "+nDCG_deal_id);
 
 //            KMeansPlusPlusClusterer<User> cluterer = new KMeansPlusPlusClusterer<User>(20);
 //            List<CentroidCluster<User>> clusters = cluterer.cluster(users.values());

@@ -170,7 +170,7 @@ public class ElasticWrapper {
             QueryBuilder qb = QueryBuilders
                     .boolQuery()
                     .must(QueryBuilders.termQuery("is_train",false))
-                    .must(rangeQuery("times_sold").gte(1))
+                    .must(rangeQuery("times_sold").gte(Config.LEAST_TIMES_SOLD))
                     .must(shouldsTimes)
                     .must(mlt);
 
@@ -179,7 +179,7 @@ public class ElasticWrapper {
                     .setTypes("deal")
                     .setQuery(qb)
                     .setFetchSource(true)
-                    .setSize(1);
+                    .setSize(Config.NUMBER_OF_DOC_FETCH);
 
             //System.out.println(response.toString());
             //System.out.println("Query mlt");

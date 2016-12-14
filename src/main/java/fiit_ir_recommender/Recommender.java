@@ -2,6 +2,7 @@ package fiit_ir_recommender;
 
 import fiit_ir_recommender.entity.DealItem;
 import fiit_ir_recommender.entity.User;
+import fiit_ir_recommender.utils.Config;
 import fiit_ir_recommender.utils.ElasticWrapper;
 import fiit_ir_recommender.utils.Ident;
 import fiit_ir_recommender.utils.PrioQWrap;
@@ -21,7 +22,7 @@ public class Recommender {
     final double D_ID_C = 0.6;
     final double PRICE_C = 0.3;
     final double BUY_COUNT_C = PRICE_C;
-    final int Q_SIZE = 10;
+    final int Q_SIZE = Config.NUMBER_OF_NEIGHBOURS;
 
     public static String RETURN_FIELD = "id";
 
@@ -35,7 +36,7 @@ public class Recommender {
             HashMap<Long,DealItem> trainDealsHash,
             HashMap<Long,DealItem> testDealsHash){
 
-        List<Ident> mostSold = recommendNewUser(testUser);
+        List<Ident> mostSold = Config.USE_MOST_SOLD?recommendNewUser(testUser):new ArrayList<>();
 
         if(!trainUsers.containsKey(testUser.getId())){
             //System.out.println("New user");
@@ -76,21 +77,37 @@ public class Recommender {
 
         if(sim.size() == 0) System.out.println("No similar found");
 
-        while(res.size() != 10) {
-            if(sim_i >= sim.size()) {
-                takeSim = false;
+        if(Config.USE_MOST_SOLD) {
+            while(res.size() != 10) {
+                if(sim_i >= sim.size()) {
+                    takeSim = false;
+                }
+
+                Ident candidate = (takeSim)?sim.get(sim_i++):mostSold.get(most_i++);
+                takeSim = !takeSim;
+
+                if(!res.contains(candidate.dealitem_id)) {
+                    res.add(candidate.dealitem_id);
+                    resultRecommendation.add(candidate);
+                }
+
+                if (counter++ > 100) break; // pre istotu :)
+            }
+        } else {
+
+            int i = 0;
+            while(res.size() <= 10 && i < sim.size()){
+
+                Ident candidate = sim.get(i++);
+
+                if(!res.contains(candidate.dealitem_id)) {
+                    res.add(candidate.dealitem_id);
+                    resultRecommendation.add(candidate);
+                }
             }
 
-            Ident candidate = (takeSim)?sim.get(sim_i++):mostSold.get(most_i++);
-            takeSim = !takeSim;
-
-            if(!res.contains(candidate.dealitem_id)) {
-                res.add(candidate.dealitem_id);
-                resultRecommendation.add(candidate);
-            }
-
-            if (counter++ > 100) break; // pre istotu :)
         }
+
         return  resultRecommendation;
     }
 
