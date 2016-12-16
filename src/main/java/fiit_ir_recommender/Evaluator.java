@@ -45,14 +45,16 @@ public class Evaluator {
             ids.add(getId(a,use_deal_id));
         }
 
-        int cnt = 0;
-        for(Ident i:recommendations) {
-            if(cnt++ >= PrecisionAtK.MAX_K) break;
+        for(int cnt = 1; cnt <= PrecisionAtK.MAX_K; cnt++ ) {
+            if(cnt-1 < recommendations.size()) {
+                Ident i = recommendations.get(cnt - 1);
+                if(ids.contains(getId(i,use_deal_id))) TP++;
+            }
 
-            if(ids.contains(getId(i,use_deal_id))) TP++;
             pak.addTpAtK(cnt,TP);
-            pak.addNAtK(cnt,Math.min(cnt,u.activities.size()));
-
+            pak.addNAtK(cnt,
+                    Math.min(cnt,
+                            Math.min(u.activities.size(),recommendations.size())));
         }
 
         return pak;

@@ -45,7 +45,7 @@ public class App {
             //compute recommendations for testUsers and push them to results
             testUsers.values()
                     .parallelStream()
-                    .limit(3000)
+                    //.limit(3000)
                     .forEach(user -> {
                         List<Ident> res = e.recommendToUser(user,trainUsers,trainDealsHash,testDealsHash);
                         results.put(user,res);
@@ -59,15 +59,19 @@ public class App {
             startTime = System.currentTimeMillis();
 
             // count TP
-            int TP = results.entrySet().parallelStream()
+            int TP = results.entrySet()
+                        .parallelStream()
                         .mapToInt(entry -> Evaluator.getTp(entry,false))
                         .sum();
-            int TP_deal_id = results.entrySet().parallelStream()
+
+            int TP_deal_id = results.entrySet()
+                    .parallelStream()
                     .mapToInt(entry -> Evaluator.getTp(entry,true))
                     .sum();
 
             // count N - min(tp+fp,activity.size())
-            int N = results.entrySet().parallelStream()
+            int N = results.entrySet()
+                    .parallelStream()
                     .mapToInt(Evaluator::getN)
                     .sum();
 
@@ -78,7 +82,8 @@ public class App {
                     .forEach((entry) -> finalPak.add(Evaluator.computePrecisionAtK(entry,false)));
 
             // Sum every Precision@K together for average
-            PrecisionAtK avg = finalPak.parallelStream()
+            PrecisionAtK avg = finalPak
+                    .parallelStream()
                     .reduce((precisionAtK, precisionAtK2) -> precisionAtK.combineWith(precisionAtK2))
                     .get();
 
@@ -88,17 +93,20 @@ public class App {
                     .parallelStream()
                     .forEach((entry) -> finalPak_deal_id.add(Evaluator.computePrecisionAtK(entry,true)));
 
-            PrecisionAtK avg_deal_id = finalPak_deal_id.parallelStream()
+            PrecisionAtK avg_deal_id = finalPak_deal_id
+                    .parallelStream()
                     .reduce((precisionAtK, precisionAtK2) -> precisionAtK.combineWith(precisionAtK2))
                     .get();
 
 
             // Average nDCG
-            double nDCG = results.entrySet().parallelStream()
+            double nDCG = results.entrySet()
+                            .parallelStream()
                             .mapToDouble(entry -> Evaluator.nDCG(entry,false))
                             .average().getAsDouble();
 
-            double nDCG_deal_id = results.entrySet().parallelStream()
+            double nDCG_deal_id = results.entrySet()
+                    .parallelStream()
                     .mapToDouble(entry -> Evaluator.nDCG(entry,true))
                     .average().getAsDouble();
 
@@ -134,7 +142,7 @@ public class App {
             System.out.println("Precision (deal_id):");
             System.out.println("TP: "+TP_deal_id);
             System.out.println("N: "+N);
-            System.out.println((double) TP/(double) N);
+            System.out.println((double) TP_deal_id/(double) N);
 
 
 

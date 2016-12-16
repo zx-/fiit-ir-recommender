@@ -96,7 +96,7 @@ public class Recommender {
         } else {
 
             int i = 0;
-            while(res.size() <= 10 && i < sim.size()){
+            while(res.size() < 10 && i < sim.size()){
 
                 Ident candidate = sim.get(i++);
 
@@ -157,6 +157,8 @@ public class Recommender {
     }
 
     public List<PrioQWrap> topClosest(User userHistory,Map<Long,User> trainUsers) {
+
+        if(Q_SIZE == 0) return new ArrayList<>();
 
         PriorityQueue<PrioQWrap> front = new PriorityQueue<>(
                 Q_SIZE,
