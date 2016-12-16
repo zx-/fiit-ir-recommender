@@ -132,8 +132,6 @@ public class Recommender {
     }
 
     public double computeSimilarity(User a, User b) {
-        double res = 0;
-
         if(a.activities.size() == 0 || b.activities.size() == 0)
             return 0;
 
@@ -176,7 +174,6 @@ public class Recommender {
                 if(front.size() > Q_SIZE) front.poll();
             }
         }
-
 
         return new ArrayList<>(front);
     }

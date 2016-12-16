@@ -82,12 +82,10 @@ public class ElasticWrapper {
         BoolQueryBuilder shoulds =  QueryBuilders.boolQuery();
 
         for(Activity a:activities) {
-
             shoulds.should(QueryBuilders
                     .boolQuery()
                     .must(rangeQuery("begin_time").lte(a.create_time))
                     .must(rangeQuery("end_time").gte(a.create_time)));
-
         }
 
         return shoulds;
@@ -96,7 +94,6 @@ public class ElasticWrapper {
     public SearchResponse newUserQuery(User u){
         List<Activity> activities = u.getActivities();
         BoolQueryBuilder shoulds =  shouldsByActivitiesTime(activities);
-
 
         QueryBuilder qb = QueryBuilders
                 .boolQuery()
@@ -110,8 +107,6 @@ public class ElasticWrapper {
                 .addSort("times_sold", SortOrder.DESC)
                 .setSize(10)
                 .setFetchSource(true);
-
-        //System.out.println("Query top");
 
         SearchResponse res = response.get();
         return res;
@@ -162,8 +157,6 @@ public class ElasticWrapper {
                             .maxQueryTerms(12)
             );
         }
-
-
         List<SearchResponse> responses = new ArrayList<>();
 
         for(QueryBuilder mlt:mlts) {
@@ -185,9 +178,6 @@ public class ElasticWrapper {
             //System.out.println("Query mlt");
             responses.add(response.get());
         }
-
-
-
         return responses;
     }
 
